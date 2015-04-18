@@ -42,4 +42,4 @@ summary(umf)
 
 fm1 <- pcount(~1 ~1, umf, K=200)
 fm1
-plogis(coef(fm1, type="det")) # Should be close to p
+plogis(coef(fm1, type="det")) # Should be close to p 
