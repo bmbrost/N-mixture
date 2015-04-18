@@ -1,31 +1,31 @@
+# library(unmarked)
+
 ###
 ### Simulate data according to model base.N.mixture.MCMC
 ###
 
 rm(list=ls())
 
-m <- 1 #Number of sites
-J <- 100 #Number of replicate observations
+m <- 1 # Number of sites
+J <- 100 # Number of replicate observations
 lambda <- 150
 p <- 0.75
 N <- rpois(m,lambda)
 Y <- matrix(0,m,J)
 Y[] <- c(sapply(1:m,function(x) rbinom(J,N[x],p[x])))
 
-library(unmarked)
-
-
-
 source("base.N.mixture.MCMC.R")
-hist(rgamma(1000,15,0.1))
-out1 <- base.N.mixture.MCMC(Y,priors=list(p=c(1,1),lambda=c(15,0.1)),n.mcmc=1000)
+hist(rgamma(1000,5,0.01))
+out1 <- base.N.mixture.MCMC(Y,priors=list(a=1,b=1,r=5,q=0.001),tune=list(N=1),n.mcmc=20000)
+out1$keep
 
-plot(1:1000,out1$N,type="l");abline(h=N)
+plot(c(out1$N),type="l");abline(h=N,col=2,lty=2)
 mean(out1$N[-(1:100)])
-plot(1:1000,out1$lambda,type="l");abline(h=lambda)
+plot(c(out1$lambda),type="l");abline(h=lambda,col=2,lty=2)
 mean(out1$lambda[-(1:100)])
-plot(1:1000,out1$p,type="p");abline(h=p)
+plot(c(out1$p),type="l");abline(h=p,col=2,lty=2)
 mean(out1$p[-(1:100)])
+
 
 
 
