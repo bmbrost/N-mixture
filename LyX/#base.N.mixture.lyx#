@@ -79,7 +79,7 @@
 
 \shape smallcaps
 \size larger
-N-mixture Model with Detection Modeled by Covariates
+Base N-mixture model
 \end_layout
 
 \begin_layout Standard
@@ -111,12 +111,12 @@ Model implementation
 \end_layout
 
 \begin_layout Standard
-The file N.mixture.sim.R simulates data according to the model statement presented
- below, and
+The file base.N.mixture.sim.R simulates data according to the model statement
+ presented below, and
 \begin_inset Newline newline
 \end_inset
 
-N.mixture.mcmc.R contains the MCMC algorithm for model fitting.
+base.N.mixture.mcmc.R contains the MCMC algorithm for model fitting.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -155,31 +155,30 @@ Let
 .
  Assuming the population is closed to mortality, recruitment, immigration,
  and emigration over the course of the 
-\begin_inset Formula $J$
+\begin_inset Formula $m$
 \end_inset
 
  surveys conducted at any given site, 
 \begin_inset Formula 
 \begin{eqnarray*}
-y_{ij} & \sim & \text{Binom}(N_{i},p_{ij})\\
+y_{ij} & \sim & \text{Binom}(N_{i},p_{i})\\
 N_{i} & \sim & \text{Pois}(\lambda_{i})\\
 \lambda_{i} & \sim & \text{Gamma}(r,q)\\
-\text{logit}(p_{ij}) & \sim & \mathbf{W}_{ij}\boldsymbol{\alpha}\\
-\boldsymbol{\alpha} & \sim & \text{N}(\boldsymbol{\mu},\tau^{2}\mathbf{I}).
+p_{i} & \sim & \text{Beta}(\alpha,\beta).
 \end{eqnarray*}
 
 \end_inset
 
 Note that this model allows 
+\begin_inset Formula $p$
+\end_inset
+
+ and 
 \begin_inset Formula $\lambda$
 \end_inset
 
- to vary by site and 
-\begin_inset Formula $p_{ij}$
-\end_inset
-
-, the detection probability, to be modeled as a function of covariates.
- 
+ to vary by site, but these parameters are not modeled as a function of
+ covariates.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -197,7 +196,7 @@ For a single site,
 \begin_layout Standard
 \begin_inset Formula 
 \[
-[N_{i},\boldsymbol{\alpha},\lambda_{i}|\mathbf{y}_{i},\mathbf{W_{i}}]\propto\prod_{j=1}^{J}[y_{ij}|N_{i},p_{ij}][N_{i}|\lambda_{i}][\lambda_{i}][\boldsymbol{\alpha}]
+[N_{i},p_{i},\lambda_{i}|\mathbf{y}_{i}]\propto\prod_{j=1}^{J}[y_{ij}|N_{i},p_{i}][N_{i}|\lambda_{i}][\lambda_{i}][p_{i}]
 \]
 
 \end_inset
@@ -212,9 +211,8 @@ Full conditional distributions
 \begin_layout Standard
 
 \emph on
-Coefficients describing the effect of covariates on detection probability
- (
-\begin_inset Formula $\boldsymbol{\alpha}$
+Probability of observing an individual (
+\begin_inset Formula $p_{i}$
 \end_inset
 
 ):
@@ -223,17 +221,15 @@ Coefficients describing the effect of covariates on detection probability
 \begin_layout Standard
 \begin_inset Formula 
 \begin{eqnarray*}
-[\boldsymbol{\alpha}|\cdot] & \propto & \prod_{j=1}^{J}[y_{ij}|N_{i},p_{ij}][\boldsymbol{\alpha}].
+[p_{i}|\cdot] & \propto & \prod_{j=1}^{J}[y_{ij}|N_{i},p_{i}][p_{i}]\\
+ & \propto & \prod_{j=1}^{J}p_{i}^{y_{ij}}(1-p_{i})^{N_{i}-y_{ij}}p_{i}^{\alpha-1}(1-p_{i})^{\beta-1}\\
+ & \propto & p_{i}^{\sum_{j=1}^{J}y_{ij}}(1-p_{i})^{\sum_{j=1}^{J}(N_{i}-y_{ij})}p^{\alpha-1}(1-p)^{\beta-1}\\
+ & = & \text{Beta}\left(\sum_{j=1}^{J}y_{ij}+\alpha,\sum_{j=1}^{J}(N_{i}-y_{ij})+\beta\right)
 \end{eqnarray*}
 
 \end_inset
 
-This full-conditional distribution does not have a known analytical form;
- therefore sample 
-\begin_inset Formula $\mathbf{p}$
-\end_inset
 
- using Metropolis-Hastings.
 \end_layout
 
 \begin_layout Standard
@@ -259,21 +255,21 @@ The true number of individuals (
 
 \begin_inset Formula 
 \begin{eqnarray*}
-[N_{i}|\cdot] & \propto & \prod_{j=1}^{J}[y_{ij}|N_{i},p_{ij}][N_{i}|\lambda_{i}]\\
+[N_{i}|\cdot] & \propto & \prod_{j=1}^{J}[y_{ij}|N_{i},p_{i}][N_{i}|\lambda_{i}]\\
  & \propto & \prod_{j=1}^{J}\left(\begin{array}{c}
 N_{i}\\
 y_{ij}
-\end{array}\right)p_{ij}^{y_{ij}}(1-p_{ij})^{N_{i}-y_{ij}}\left(\frac{\lambda_{i}^{N_{i}}e^{-\lambda_{i}}}{N_{i}!}\right)\\
- & \propto & \prod_{j=1}^{J}\left(\frac{N_{i}!}{y_{ij}!(N_{i}-y_{ij})!}\right)p_{ij}^{y_{ij}}(1-p_{ij})^{N_{i}-y_{ij}}\left(\frac{\lambda_{i}^{N_{i}}e^{-\lambda_{i}}}{N_{i}!}\right)\\
- & \propto & \prod_{j=1}^{J}\frac{(1-p_{ij})^{N_{i}-y_{ij}}\lambda_{i}^{N_{i}}}{(N_{i}-y_{ij})!}\\
- & \propto & \prod_{j=1}^{J}\frac{(1-p_{ij})^{N_{i}-y_{ij}}\lambda_{i}^{N_{i}}\lambda_{i}^{-y_{ij}}}{(N_{i}-y_{ij})!}\\
- & \propto & \prod_{j=1}^{J}\frac{\left(\lambda_{i}(1-p_{ij})\right){}^{N_{i}-y_{ij}}}{(N_{i}-y_{ij})!}e^{-\lambda_{i}(1-p_{ij})}.
+\end{array}\right)p_{i}^{y_{ij}}(1-p_{i})^{N_{i}-y_{ij}}\left(\frac{\lambda_{i}^{N_{i}}e^{-\lambda_{i}}}{N_{i}!}\right)\\
+ & \propto & \prod_{j=1}^{J}\left(\frac{N_{i}!}{y_{ij}!(N_{i}-y_{ij})!}\right)p_{i}^{y_{ij}}(1-p_{i})^{N_{i}-y_{ij}}\left(\frac{\lambda_{i}^{N_{i}}e^{-\lambda_{i}}}{N_{i}!}\right)\\
+ & \propto & \prod_{j=1}^{J}\frac{(1-p_{i})^{N_{i}-y_{ij}}\lambda_{i}^{N_{i}}}{(N_{i}-y_{ij})!}\\
+ & \propto & \prod_{j=1}^{J}\frac{(1-p_{i})^{N_{i}-y_{ij}}\lambda_{i}^{N_{i}}\lambda_{i}^{-y_{ij}}}{(N_{i}-y_{ij})!}\\
+ & \propto & \prod_{j=1}^{J}\frac{\left(\lambda_{i}(1-p_{i})\right){}^{N_{i}-y_{ij}}}{(N_{i}-y_{ij})!}e^{-\lambda_{i}(1-p_{i})}.
 \end{eqnarray*}
 
 \end_inset
 
 This full-conditional is a little strange because 
-\begin_inset Formula $[N_{i}-y_{ij}|\cdot]\propto\text{Pois}(\lambda_{i}(1-p_{ij}))$
+\begin_inset Formula $[N_{i}-y_{ij}|\cdot]\propto\text{Pois}(\lambda_{i}(1-p_{i}))$
 \end_inset
 
 , which suggests there is one true abundance per replicate count at each
@@ -284,11 +280,7 @@ This full-conditional is a little strange because
 \end_inset
 
 .
- Given that 
-\begin_inset Formula $[N_{i}|\cdot]$
-\end_inset
-
- lacks a clear analytical solution, sample 
+ Given this peculiarity, sample 
 \begin_inset Formula $N_{i}$
 \end_inset
 

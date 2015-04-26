@@ -79,7 +79,7 @@
 
 \shape smallcaps
 \size larger
-Base N-mixture model
+Basic N-mixture Model
 \end_layout
 
 \begin_layout Standard
@@ -112,8 +112,11 @@ Model implementation
 
 \begin_layout Standard
 The file base.N.mixture.sim.R simulates data according to the model statement
- presented below, and base.N.mixture.mcmc.R contains the MCMC algorithm for
- model fitting.
+ presented below, and
+\begin_inset Newline newline
+\end_inset
+
+base.N.mixture.mcmc.R contains the MCMC algorithm for model fitting.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -152,7 +155,7 @@ Let
 .
  Assuming the population is closed to mortality, recruitment, immigration,
  and emigration over the course of the 
-\begin_inset Formula $m$
+\begin_inset Formula $J$
 \end_inset
 
  surveys conducted at any given site, 
@@ -193,7 +196,7 @@ For a single site,
 \begin_layout Standard
 \begin_inset Formula 
 \[
-[N_{i},p_{i},\lambda_{i}|y_{ij}]\propto\prod_{j=1}^{J}[y_{ij}|N_{i},p_{i}][N_{i}|\lambda_{i}][\lambda_{i}][p_{i}]
+[N_{i},p_{i},\lambda_{i}|\mathbf{y}_{i}]\propto\prod_{j=1}^{J}[y_{ij}|N_{i},p_{i}][N_{i}|\lambda_{i}][\lambda_{i}][p_{i}]
 \]
 
 \end_inset
@@ -208,7 +211,7 @@ Full conditional distributions
 \begin_layout Standard
 
 \emph on
-Probability of observation (
+Probability of observing an individual (
 \begin_inset Formula $p_{i}$
 \end_inset
 
@@ -277,7 +280,11 @@ This full-conditional is a little strange because
 \end_inset
 
 .
- Given this peculiarity, sample 
+ Given that 
+\begin_inset Formula $[N_{i}|\cdot]$
+\end_inset
+
+ lacks a clear analytical solution, sample 
 \begin_inset Formula $N_{i}$
 \end_inset
 

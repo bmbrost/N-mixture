@@ -1,21 +1,24 @@
 N.mixture.MCMC <- function(Y,W,priors,tune,start,n.mcmc=1000){
 
   ###
-  ### Brian M. Brost (17APR2015)
+  ### Brian M. Brost (25APR2015)
   ###
-  ### N-mixture model for multiple sites with detection covariates (Royle 2004)
+  ### N-mixture model for multiple sites with detection modeled by covariates
   ###
-  ### Model statement:
-  ### Y[i,j]~Binom(N[j],p[i,j])
-  ### N[j]~Pois(lambda[j])
-  ### lambda[j]~Gamma(r,q)
+  ### Model statement: (i indexes site, j indexes observation)
+  ### Y[i,j]~Binom(N[i],p[i,j])
+  ### N[i]~Pois(lambda[i])
+  ### lambda[i]~Gamma(r,q)
   ### logit(p[i,j])~W[j,,i]%*%alpha
+  ### alpha ~ N(mu,tau^2*I)
   ###
   ### Function arguments: 
   ### Y=m*J matrix, where m is the number of sites and J is the maximum number of
   ###   observations across all sites
-  ### W=J*length(alpha)*m array; each 'slice' of W is a design matrix for model on detection
+  ### W=J*length(alpha)*m array; each 'slice' of W is a design matrix for detection model at a site
   ### priors=parameters of prior distributions for lambda and alpha
+  ### tune=tuning parameters for N and alpha
+  ### start=starting values for N,lambda, and alpha
   ###
     
   ###
@@ -42,10 +45,6 @@ N.mixture.MCMC <- function(Y,W,priors,tune,start,n.mcmc=1000){
   
   N.tune <- seq(-1*tune$N,tune$N,1)
 
-  alpha <- rnorm(qW,0,priors$tau)
-  N <- apply(Y,1,max)+1
-  lambda <- N
-  
   alpha <- start$alpha
   N <- start$N
   lambda <- start$lambda
@@ -78,7 +77,6 @@ N.mixture.MCMC <- function(Y,W,priors,tune,start,n.mcmc=1000){
     ###  Sample N 
     ###
     
-    # Note: the full conditional for N is conjugate, but is funky; therefore, use a M-H update
     N.star <- N + sample(N.tune,m,replace=TRUE)    
     idx <- which(N.star>y.max)
       for(i in idx){

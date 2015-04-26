@@ -79,7 +79,7 @@
 
 \shape smallcaps
 \size larger
-N-mixture Model with Detection Modeled by Covariates
+N-mixture Model with Detection Modeled as a Funcion of Covariates
 \end_layout
 
 \begin_layout Standard

@@ -10,13 +10,13 @@ logit <- function(x) log(x/(1-p))
 T <- 8 # Number of years of data
 m <- 10 # Number of replicate observations
 lambda <- 1200 # Intensity of Poisson distribution for t=1
-theta <- 0.987 # Population growth rate
-# z <- log(lambda)
-  
+theta <- 0.987 # Population growth rate; can use for identity link for Poisson rate
+
 # Simulate true abundance with trend
 N <- numeric(T)
 N[1] <- rpois(1,lambda) # Initial population size at t=1
-for(i in 2:T) N[i] <- rpois(1,theta*N[i-1]) # Intensity with linear trend
+# for(i in 2:T) N[i] <- rpois(1,theta*N[i-1]) # Intensity with linear trend; indentity link
+for(i in 2:T) N[i] <- rpois(1,exp(log(theta)+log(N[i-1]))) # Intensity with linear trend; log link
 plot(N,type="l")
 
 W <- array(1,dim=c(m,2,T)) # Design matrix for detection probability
@@ -45,15 +45,16 @@ matplot(Y,pch=19,cex=0.5,col=rgb(1,0,0,0.25),add=TRUE) # Observed counts
 source("N.mixture.trend.MCMC.R")
 # hist(rgamma(1000,2,0.001),breaks=100)
 
-priors <- list(r=2,q=0.001,tau=2,sigma=2)
-tune <- list(N=30,alpha=0.003,theta=0.05)
-start <- list(N=N,alpha=alpha,lambda=lambda,theta=theta)
-out1 <- N.mixture.trend.MCMC(Y,W,priors,tune,start,n.mcmc=3000)
+priors <- list(r=2,q=0.001,tau=2,sigma=0.1)
+tune <- list(N=40,alpha=0.003,theta=0.05)
+# start <- list(N=N,alpha=alpha,lambda=lambda,theta=theta)
+start <- list(N=round(apply(Y,1,max)*1.1),alpha=c(-5,1),lambda=1000,theta=1)
+out1 <- N.mixture.trend.MCMC(Y,W,priors,tune,start,n.mcmc=5000)
 
 matplot(out1$alpha[,],type="l");abline(h=alpha,col=2,lty=2)
 apply(out1$alpha,2,mean);apply(out1$alpha,2,quantile,c(0.025,0.975))
-matplot(out1$N,type="l",col=1:T,lty=1);abline(h=N,col=1:T,lty=2)
-apply(out1$N,2,mean)
+matplot(out1$N[-c(1:1000),],type="l",col=1:T,lty=1);abline(h=N,col=1:T,lty=2)
+apply(out1$N,2,mean);apply(out1$N,2,quantile,c(0.025,0.975))
 N
 plot(out1$lambda,type="l");abline(h=lambda,col=2,lty=2)
 plot(out1$theta,type="l");abline(h=theta,col=2,lty=2)

@@ -1,21 +1,22 @@
-base.N.mixture.MCMC <- function(Y,priors=list(a=1,b=1,r=15,q=0.1),tune=list(N=5),n.mcmc=1000){
+base.N.mixture.MCMC <- function(Y,priors,tune,start,n.mcmc=1000){
   
   ###
   ### Brian M. Brost (17APR2015)
   ###
-  ### Base N-mixture model for multiple sites (Royle 2004)
+  ### Basic N-mixture model for multiple sites
   ###
-  ### Model statement:
-  ### Y[i,j]~Binom(N[j],p)
-  ### N[j]~Pois(lambda[j])
-  ### lambda[j]~Gamma(r,q)
-  ### p~beta(a,b)
+  ### Model statement: (i indexes site, j indexes observation)
+  ### Y[i,j]~Binom(N[i],p[i])
+  ### N[i]~Pois(lambda[i])
+  ### lambda[i]~Gamma(r,q)
+  ### p[i]~beta(a,b)
   ###
   ### Function arguments: 
   ### Y=m*J matrix, where m is the number of sites and J is the maximum number of
   ###   observations across all sites
   ### priors=parameters of prior distributionsfor p and lambda
-  ###
+  ### tune=tuning parameter for N
+  ### start=starting values for N, p, and lambda
     
   ###
   ###  Setup Variables 
@@ -24,21 +25,22 @@ base.N.mixture.MCMC <- function(Y,priors=list(a=1,b=1,r=15,q=0.1),tune=list(N=5)
   #   browser()
   m <- nrow(Y) #Number of sites
   y <- rowSums(Y) #Total of observed counts by site
-  y.min <- apply(Y,1,min)
+  y.max <- apply(Y,1,max)
   keep <- 0
   
-  N.save <- matrix(0,m,n.mcmc)
-  lambda.save <- matrix(0,m,n.mcmc)
-  p.save <- matrix(0,m,n.mcmc)
+  N.save <- matrix(0,n.mcmc,m)
+  lambda.save <- matrix(0,n.mcmc,m)
+  p.save <- matrix(0,n.mcmc,m)
   
   ###
   ###  Priors and starting values 
   ###
   
   N.tune <- seq(-1*tune$N,tune$N,1)
-
-  N <- apply(Y,1,max)+1
-  lambda <- N
+  
+  N <- start$N
+  lambda <- start$lambda
+  p <- start$p
   
   ###
   ###  Begin MCMC loop
@@ -50,60 +52,67 @@ base.N.mixture.MCMC <- function(Y,priors=list(a=1,b=1,r=15,q=0.1),tune=list(N=5)
     ###
     ###  Sample p 
     ###
-# browser()
-  Y  
-  p <- rbeta(m,y+priors$a,sapply(1:m,function(x) sum(N[x]-Y[x,]))+priors$b)
-# p <- rbeta(m,y+priors$a,sum(N-Y))+priors$b)
+  
+    p <- rbeta(m,y+priors$a,sapply(1:m,function(x) sum(N[x]-Y[x,]))+priors$b)
 
 
     ###
     ###  Sample N 
     ###
     
-    # Note: the full conditional for N is conjugate, but is funky; therefore, use a M-H update
-    # N <- min(Y+rpois(m,(1-p)*lambda))
-
+#     N.star <- N + sample(N.tune,m,replace=TRUE)    
+#     idx <- which(N.star>y.max)
+#     for(i in idx){
+#       p.tmp <- p[p.idx[i,1]:p.idx[i,2]] # Detection probabilities for t=i
+#       mh.star.N <- sum(dbinom(Y[i,],N.star[i],p.tmp,log=TRUE))+dpois(N.star[i],lambda[i],log=TRUE)
+#       mh.0.N <- sum(dbinom(Y[i,],N[i],p.tmp,log=TRUE))+dpois(N[i],lambda[i],log=TRUE)  
+#       if(exp(mh.star.N-mh.0.N)>runif(1)){
+#         N[i] <- N.star[i]
+#         keep$N <- keep$N+1
+#       }
+#     }  
+    
     N.star <- N + sample(N.tune,m,replace=TRUE)
-    idx <- which(N.star>=0 & N.star>y.min)
-    n.tmp <- length(idx)
-#     browser()
-    if(length(idx)>0){
-      mh.star.N <- rowSums(matrix(dbinom(Y[idx,],N.star[idx],p[idx],log=TRUE),n.tmp,J))+dpois(N.star[idx],lambda[idx],log=TRUE)
-      mh.0.N <- rowSums(matrix(dbinom(Y[idx,],N[idx],p[idx],log=TRUE),n.tmp,J))+dpois(N[idx],lambda[idx],log=TRUE)  
-      idx <- idx[exp(mh.star.N-mh.0.N)>runif(n.tmp)]
-      N[idx] <- N.star[idx]
-      keep <- keep+length(idx)
-    }
+    idx <- which(N.star>y.max)
+    for(i in idx){
+      mh.star.N <- sum(dbinom(Y[i,],N.star[i],p[i],log=TRUE))+dpois(N.star[i],lambda[i],log=TRUE)
+      mh.0.N <- sum(dbinom(Y[i,],N[i],p[i],log=TRUE))+dpois(N[i],lambda[i],log=TRUE)  
+      if(exp(mh.star.N-mh.0.N)>runif(1)){
+        N[i] <- N.star[i]
+        keep <- keep+1
+      }
+    }  
+    
+#     if(length(idx)>0){
+#       mh.star.N <- rowSums(matrix(dbinom(Y[idx,],N.star[idx],p[idx],log=TRUE),n.tmp,J))+dpois(N.star[idx],lambda[idx],log=TRUE)
+#       mh.0.N <- rowSums(matrix(dbinom(Y[idx,],N[idx],p[idx],log=TRUE),n.tmp,J))+dpois(N[idx],lambda[idx],log=TRUE)  
+#       idx <- idx[exp(mh.star.N-mh.0.N)>runif(n.tmp)]
+#       N[idx] <- N.star[idx]
+#       keep <- keep+length(idx)
+#     }
 
-#   if(length(idx)>0){
-#   mh.star.N <- sum(dbinom(Y,N.star,p,log=TRUE))+dpois(N.star,lambda,log=TRUE)
-#   mh.0.N <- sum(dbinom(Y,N,p,log=TRUE))+dpois(N,lambda,log=TRUE)
-#   if(exp(mh.star.N-mh.0.N)>runif(1)){
-#     N <- N.star
-#     keep <- keep+1
-#   }
-# }
 
-    ####
-    ####  Sample lambda 
-    ####
+    ###
+    ###  Sample lambda 
+    ###
     
     lambda <- rgamma(m,shape=N+priors$r,rate=1+priors$q)
     
-    ####
-    ####  Save Samples 
-    ####
+
+    ###
+    ###  Save Samples 
+    ###
     
-    p.save[,k] <- p
-    N.save[,k] <- N
-    lambda.save[,k] <- lambda
+    p.save[k,] <- p
+    N.save[k,] <- N
+    lambda.save[k,] <- lambda
   }
   
-  ####
-  ####  Write Output 
-  ####
+  ###
+  ###  Write Output 
+  ###
 
-  cat("\n")
-  cat(paste("Acceptance rate:",keep/(n.mcmc*m)))  
-  list(p=p.save,N=N.save,lambda=lambda.save,keep=keep/(n.mcmc*m),n.mcmc=n.mcmc)
+  keep <- keep/(n.mcmc*m)
+  cat(paste("\nN Acceptance rate:",round(keep,2)))  
+  list(p=p.save,N=N.save,lambda=lambda.save,keep=keep,n.mcmc=n.mcmc)
 }
