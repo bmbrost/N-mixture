@@ -311,7 +311,7 @@ Rate of the process model (
  & \propto & \frac{\lambda_{i}^{N_{i}}e^{-\lambda_{i}}}{N_{i}!}\lambda_{i}^{r-1}e^{-\lambda_{i}q}\\
  & \propto & \lambda_{i}^{N_{i}}e^{-\lambda_{i}}\lambda_{i}^{r-1}e^{-\lambda_{i}q}\\
  & \propto & \lambda_{i}^{N_{i}+r-1}e^{-\lambda_{i}(1+q)}\\
- & = & \text{Gamma}\left(N_{i}+r,1+q\right).
+ & = & \text{Gamma}\left(N_{i}+r,1+q\right)
 \end{eqnarray*}
 
 \end_inset

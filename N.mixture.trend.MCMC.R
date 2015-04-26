@@ -6,9 +6,11 @@ N.mixture.trend.MCMC <- function(Y,W,priors=list(r=15,q=0.1,tau=2,sigma=2),tune=
   ### N-mixture model for multiple sites with detection covariates (Royle 2004)
   ###
   ### Model statement:
-  ### Y[i,j]~Binom(N[j],p[i,j])
-  ### N[j]~Pois(lambda[j])
-  ### lambda[j]~Gamma(r,q)
+  ### Y[i,t]~Binom(N[t],p[i,t])
+  ### N[1]~Pois(lambda)
+  ### N[t]=theta*N[t-1]
+  ### lambda~Gamma(r,q)
+  ### theta~N(mu,sigma^2)
   ### logit(p[i,j])~W[j,,i]%*%alpha
   ###
   ### Function arguments: 
