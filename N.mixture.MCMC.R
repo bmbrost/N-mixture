@@ -1,4 +1,4 @@
-N.mixture.MCMC <- function(Y,W,priors=list(r=15,q=0.1,tau=2),tune=list(N=5,alpha=0.01),n.mcmc=1000){
+N.mixture.MCMC <- function(Y,W,priors,tune,start,n.mcmc=1000){
 
   ###
   ### Brian M. Brost (17APR2015)
@@ -24,15 +24,16 @@ N.mixture.MCMC <- function(Y,W,priors=list(r=15,q=0.1,tau=2),tune=list(N=5,alpha
 
   #   browser()
   m <- nrow(Y) # Number of sites
-  J <- ncol(Y) # Number of replicate counts
+  J <- apply(Y,1,function(x) sum(!is.na(x))) # Number of observations per site
   y <- rowSums(Y) # Total of observed counts by site
-  y.min <- apply(Y,1,min)
+  y.max <- apply(Y,1,max)
+  p.idx <- cbind(cumsum(J)-J+1,cumsum(J)) # Index for matching records in Y to p
   keep <- list(N=0,alpha=0)
   qW <- ncol(W)
   W.mat <- apply(W,2,I) # Convert W from 3-D array to 2-D matrix
   
-  N.save <- matrix(0,m,n.mcmc)
-  lambda.save <- matrix(0,m,n.mcmc)
+  N.save <- matrix(0,n.mcmc,m)
+  lambda.save <- matrix(0,n.mcmc,m)
   alpha.save <- matrix(0,n.mcmc,qW)
   
   ###
@@ -42,9 +43,13 @@ N.mixture.MCMC <- function(Y,W,priors=list(r=15,q=0.1,tau=2),tune=list(N=5,alpha
   N.tune <- seq(-1*tune$N,tune$N,1)
 
   alpha <- rnorm(qW,0,priors$tau)
-  alpha <- c(-5,0.75)
   N <- apply(Y,1,max)+1
   lambda <- N
+  
+  alpha <- start$alpha
+  N <- start$N
+  lambda <- start$lambda
+  p <- expit(W.mat%*%alpha)
   
   ###
   ###  Begin MCMC loop
@@ -60,7 +65,7 @@ N.mixture.MCMC <- function(Y,W,priors=list(r=15,q=0.1,tau=2),tune=list(N=5,alpha
   
     alpha.star <- rnorm(qW,alpha,tune$alpha*I(qW))
     p.star <- expit(W.mat%*%alpha.star)
-    N.tmp <- rep(N,each=J)  
+    N.tmp <- c(sapply(1:m,function(x) rep(N[x],J[x])))        
     mh.star.alpha <- sum(dbinom(c(t(Y)),N.tmp,p.star,log=TRUE))+sum(dnorm(alpha.star,0,priors$tau,log=TRUE))
     mh.0.alpha <- sum(dbinom(c(t(Y)),N.tmp,p,log=TRUE))+sum(dnorm(alpha,0,priors$tau,log=TRUE))
     if(exp(mh.star.alpha-mh.0.alpha)>runif(1)){
@@ -74,45 +79,41 @@ N.mixture.MCMC <- function(Y,W,priors=list(r=15,q=0.1,tau=2),tune=list(N=5,alpha
     ###
     
     # Note: the full conditional for N is conjugate, but is funky; therefore, use a M-H update
-    # N <- min(Y+rpois(m,(1-p)*lambda))
+    N.star <- N + sample(N.tune,m,replace=TRUE)    
+    idx <- which(N.star>y.max)
+      for(i in idx){
+        p.tmp <- p[p.idx[i,1]:p.idx[i,2]] # Detection probabilities for t=i
+        mh.star.N <- sum(dbinom(Y[i,],N.star[i],p.tmp,log=TRUE))+dpois(N.star[i],lambda[i],log=TRUE)
+        mh.0.N <- sum(dbinom(Y[i,],N[i],p.tmp,log=TRUE))+dpois(N[i],lambda[i],log=TRUE)  
+        if(exp(mh.star.N-mh.0.N)>runif(1)){
+          N[i] <- N.star[i]
+          keep$N <- keep$N+1
+        }
+      }  
+    
 
-    N.star <- N + sample(N.tune,m,replace=TRUE)
-    idx <- which(N.star>=0 & N.star>y.min)
-    N.star.tmp <- rep(N.star[idx],each=J)
-    N.tmp <- rep(N[idx],each=J)
-    n.tmp <- length(idx)
-#     browser()
-    if(n.tmp>0){
-      mh.star.N <- sum(dbinom(c(t(Y[idx,])),N.star.tmp,p,log=TRUE))+dpois(N.star[idx],lambda[idx],log=TRUE)
-      mh.0.N <- sum(dbinom(c(t(Y[idx,])),N.tmp,p,log=TRUE))+dpois(N[idx],lambda[idx],log=TRUE)  
-      idx <- idx[exp(mh.star.N-mh.0.N)>runif(n.tmp)]
-      N[idx] <- N.star[idx]
-      keep$N <- keep$N+length(idx)
-    }      
-
-
-    ####
-    ####  Sample lambda 
-    ####
+    ###
+    ###  Sample lambda 
+    ###
     
     lambda <- rgamma(m,shape=N+priors$r,rate=1+priors$q)
     
-    ####
-    ####  Save Samples 
-    ####
+    ###
+    ###  Save Samples 
+    ###
     
     alpha.save[k,] <- alpha
-    N.save[,k] <- N
-    lambda.save[,k] <- lambda
+    N.save[k,] <- N
+    lambda.save[k,] <- lambda
   }
   
-  ####
-  ####  Write Output 
-  ####
+  ###
+  ###  Write Output 
+  ###
   
   keep$N <- keep$N/(n.mcmc*m)
   keep$alpha <- keep$alpha/n.mcmc
-  cat(paste("\nN acceptance rate:",keep$N))  
-  cat(paste("\nalpha acceptance rate:",keep$alpha))  
+  cat(paste("\nN acceptance rate:",round(keep$N,2)))  
+  cat(paste("\nalpha acceptance rate:",round(keep$alpha,2)))  
   list(alpha=alpha.save,N=N.save,lambda=lambda.save,keep=keep,n.mcmc=n.mcmc)
 }
