@@ -37,12 +37,14 @@ matplot(Y,pch=19,cex=0.5,col=rgb(1,0,0,0.25),add=TRUE) # Observed counts
 ### Fit model using MCMC algorithm
 ###
 
+W.mat <- apply(W,2,I) # Convert W from 3-D array to 2-D matrix
+
 source("N.mixture.MCMC.R")
 # hist(rgamma(1000,5,0.01))
 priors <- list(r=5,q=0.001,tau=2)
 tune <- list(N=10,alpha=0.01)
 start <- list(N=N,alpha=alpha,lambda=lambda)
-out1 <- N.mixture.MCMC(Y,W,priors,tune,start,n.mcmc=3000)
+out1 <- N.mixture.MCMC(Y,W.mat,priors,tune,start,n.mcmc=3000)
 
 matplot(out1$N,type="l",col=1:m,lty=1);abline(h=N,col=1:m,lty=2)
 apply(out1$N,2,mean);apply(out1$N,2,quantile,c(0.025,0.975))

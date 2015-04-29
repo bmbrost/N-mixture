@@ -192,7 +192,7 @@ Posterior distribution
 \begin_layout Standard
 \begin_inset Formula 
 \[
-[N_{1},N_{t},\boldsymbol{\alpha},\lambda_{1},\theta|\mathbf{Y},\mathbf{W}]\propto\prod_{t=1}^{T}\prod_{i=1}^{m}[y_{it}|N_{t},p_{it}][N_{1}|\lambda_{1}][N_{t}|\theta][\theta][\lambda_{1}][\boldsymbol{\alpha}]
+[N_{1},N_{\{t>2\}},\boldsymbol{\alpha},\lambda_{1},\theta|\mathbf{Y},\mathbf{W}]\propto\prod_{t=1}^{T}\prod_{i=1}^{m}[y_{it}|N_{t},p_{it}][N_{1}|\lambda_{1}][N_{\{t>2\}}|\theta][\theta][\lambda_{1}][\boldsymbol{\alpha}]
 \]
 
 \end_inset
@@ -224,7 +224,7 @@ Coefficients describing the effect of covariates on detection probability
 \end_inset
 
 This full-conditional distribution does not have a known analytical form;
- therefore sample 
+ therefore, sample 
 \begin_inset Formula $\mathbf{p}$
 \end_inset
 
@@ -357,7 +357,7 @@ The true number of individuals during
 
 \begin_inset Formula 
 \begin{eqnarray*}
-[N_{T}|\cdot] & \propto & \prod_{i=1}^{m}[y_{iT}|N_{T},p_{iT}][N_{T}|\theta,N_{t-1}]
+[N_{T}|\cdot] & \propto & \prod_{i=1}^{m}[y_{iT}|N_{T},p_{iT}][N_{T}|\theta,N_{T-1}]
 \end{eqnarray*}
 
 \end_inset
@@ -397,7 +397,7 @@ Rate of the process model for
 \begin_inset Formula 
 \begin{eqnarray*}
 [\lambda_{1}|\cdot] & \propto & [N_{1}|\lambda_{1}][\lambda_{1}]\\
- & \propto & \frac{\lambda_{1}^{N_{1}}e^{-\lambda_{!}}}{N_{1}!}\lambda_{1}^{r-1}e^{-\lambda_{1}q}\\
+ & \propto & \frac{\lambda_{1}^{N_{1}}e^{-\lambda_{1}}}{N_{1}!}\lambda_{1}^{r-1}e^{-\lambda_{1}q}\\
  & \propto & \lambda_{1}^{N_{1}}e^{-\lambda_{1}}\lambda_{1}^{r-1}e^{-\lambda_{1}q}\\
  & \propto & \lambda_{1}^{N_{1}+r-1}e^{-\lambda_{1}(1+q)}\\
  & = & \text{Gamma}\left(N_{1}+r,1+q\right).

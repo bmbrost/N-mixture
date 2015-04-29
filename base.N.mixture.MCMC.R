@@ -22,10 +22,10 @@ base.N.mixture.MCMC <- function(Y,priors,tune,start,n.mcmc=1000){
   ###  Setup Variables 
   ###
 
-  #   browser()
+#     browser()
   m <- nrow(Y) #Number of sites
-  y <- rowSums(Y) #Total of observed counts by site
-  y.max <- apply(Y,1,max)
+  y <- rowSums(Y,na.rm=TRUE) #Total of observed counts by site
+  y.max <- apply(Y,1,max,na.rm=TRUE)
   keep <- 0
   
   N.save <- matrix(0,n.mcmc,m)
@@ -53,9 +53,16 @@ base.N.mixture.MCMC <- function(Y,priors,tune,start,n.mcmc=1000){
     ###  Sample p 
     ###
   
-    p <- rbeta(m,y+priors$a,sapply(1:m,function(x) sum(N[x]-Y[x,]))+priors$b)
+    p <- rbeta(m,y+priors$a,sapply(1:m,function(x) sum(N[x]-Y[x,],na.rm=TRUE))+priors$b)
+    
 
-
+    ###
+    ###  Sample lambda 
+    ###
+    
+    lambda <- rgamma(m,shape=N+priors$r,rate=1+priors$q)
+    
+    
     ###
     ###  Sample N 
     ###
@@ -71,12 +78,12 @@ base.N.mixture.MCMC <- function(Y,priors,tune,start,n.mcmc=1000){
 #         keep$N <- keep$N+1
 #       }
 #     }  
-    
+
     N.star <- N + sample(N.tune,m,replace=TRUE)
     idx <- which(N.star>y.max)
     for(i in idx){
-      mh.star.N <- sum(dbinom(Y[i,],N.star[i],p[i],log=TRUE))+dpois(N.star[i],lambda[i],log=TRUE)
-      mh.0.N <- sum(dbinom(Y[i,],N[i],p[i],log=TRUE))+dpois(N[i],lambda[i],log=TRUE)  
+      mh.star.N <- sum(dbinom(Y[i,],N.star[i],p[i],log=TRUE),na.rm=TRUE)+dpois(N.star[i],lambda[i],log=TRUE)
+      mh.0.N <- sum(dbinom(Y[i,],N[i],p[i],log=TRUE),na.rm=TRUE)+dpois(N[i],lambda[i],log=TRUE)  
       if(exp(mh.star.N-mh.0.N)>runif(1)){
         N[i] <- N.star[i]
         keep <- keep+1
@@ -91,14 +98,7 @@ base.N.mixture.MCMC <- function(Y,priors,tune,start,n.mcmc=1000){
 #       keep <- keep+length(idx)
 #     }
 
-
-    ###
-    ###  Sample lambda 
-    ###
     
-    lambda <- rgamma(m,shape=N+priors$r,rate=1+priors$q)
-    
-
     ###
     ###  Save Samples 
     ###
