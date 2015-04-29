@@ -22,6 +22,14 @@ N.mixture.MCMC <- function(Y,W,priors,tune,start,n.mcmc=1000){
   ###
     
   ###
+  ###  Libraries and subroutines
+  ###
+  
+  expit <- function(x) 1/(1+exp(-x))
+  logit <- function(x) log(x/(1-p))
+  
+  
+  ###
   ###  Setup Variables 
   ###
 

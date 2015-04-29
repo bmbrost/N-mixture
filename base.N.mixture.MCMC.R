@@ -18,6 +18,15 @@ base.N.mixture.MCMC <- function(Y,priors,tune,start,n.mcmc=1000){
   ### tune=tuning parameter for N
   ### start=starting values for N, p, and lambda
     
+  
+  ###
+  ###  Libraries and subroutines
+  ###
+  
+  expit <- function(x) 1/(1+exp(-x))
+  logit <- function(x) log(x/(1-p))
+  
+  
   ###
   ###  Setup Variables 
   ###
