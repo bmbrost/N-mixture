@@ -182,6 +182,17 @@ Note that an identity link for the model on
 \end_inset
 
 .
+ The algorithm in N.mixture.trend.mcmc.R will also estimate the posterior predictive
+ distribution for time periods in which no observations are available, i.e.,
+ 
+\begin_inset Formula $N_{\tilde{t}}$
+\end_inset
+
+, 
+\begin_inset Formula $\tilde{t}=2,\ldots,T-1$
+\end_inset
+
+.
  
 \end_layout
 
@@ -328,6 +339,37 @@ This full-conditional lacks an analytical solution; therefore, sample
 \end_inset
 
  using Metropolis-Hastings.
+ Note, for time periods 
+\begin_inset Formula $\tilde{t}$
+\end_inset
+
+ in which observations are missing, the posterior predictive distribution
+ for true abundance is:
+\begin_inset Formula 
+\begin{eqnarray*}
+[N_{\tilde{t}}|\cdot] & \propto & \prod_{i=1}^{m}[N_{\tilde{t}}|\theta,N_{\tilde{t}-1}][N_{\tilde{t}+1}|\theta,N_{\tilde{t}}],
+\end{eqnarray*}
+
+\end_inset
+
+where observations for time periods 
+\begin_inset Formula $\tilde{t}-1$
+\end_inset
+
+ and 
+\begin_inset Formula $\tilde{t}+1$
+\end_inset
+
+ are available and 
+\begin_inset Formula $N_{\tilde{t}-1}$
+\end_inset
+
+ and 
+\begin_inset Formula $N_{\tilde{t}+1}$
+\end_inset
+
+ are estimated as above.
+ 
 \end_layout
 
 \begin_layout Standard

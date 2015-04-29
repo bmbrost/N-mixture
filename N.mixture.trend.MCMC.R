@@ -17,37 +17,48 @@ N.mixture.trend.MCMC <- function(Y,W,priors,tune,start,n.mcmc=1000){
   ### Note: an identity link for N[t] could also be used. Code for this alternative, i.e., 
   ###   N[t]~Pois(theta*N[t-1]), is 'commented' out below in updates for N[t], N[T], and theta 
   ###
+  ### Note: this algorithm allows estimation of the posterior predictive distribution (i.e., smoother
+  ###   distribution) for time periods in which observations are missing, provided observations are 
+  ###   availabe for the preceding and following time periods.
+  ###
   ### Function arguments: 
+  ### t=times corresponding to rows in Y, i.e., times in which observations are available
   ### Y=T*m matrix, where m is the number of observations and T is the number of time periods
   ### W=m*length(alpha)*T array; each 'slice' of W is a design matrix for detection model during a time period
   ### priors=parameters of prior distributions for lambda, alpha, and theta
   ### tune=tuning parameters for N, alpha, and theta
   ### start=starting values for N,lambda, alpha, and theta
   ###
+
   
+  ###
+  ###  Libraries and subroutines
+  ###
+  
+  expit <- function(x) 1/(1+exp(-x))
+  logit <- function(x) log(x/(1-p))
   
   ###
   ###  Setup Variables 
   ###
-  
-  #     browser()
+
+#     browser()
+  qY <- ncol(Y)
+  qW <- ifelse(is.null(ncol(W)),1,ncol(W))
   T <- nrow(Y) # Number of time periods
   m <- apply(Y,1,function(x) sum(!is.na(x))) # Number of observations per time period
-  p.idx <- cbind(cumsum(m)-m+1,cumsum(m)) # Index for matching records in Y to p
-  y <- rowSums(Y) # Total of observed counts by time period
-  y.max <- apply(Y,1,max) # Maximum count per time period
+  y.max <- rep(0,T)
+  y.max[m>0] <- apply(Y[m>0,],1,max,na.rm=TRUE)
   
   keep <- list(N=0,alpha=0,theta=0)
-  qW <- ncol(W)
-  W.mat <- apply(W,2,I) # Convert W from 3-D array to 2-D matrix
-  
+
   N.save <- matrix(0,n.mcmc,T)
   lambda.save <- numeric(n.mcmc)
   alpha.save <- matrix(0,n.mcmc,qW)
   theta.save <- numeric(n.mcmc)
   
   ###
-  ###  Priors and starting values 
+  ###  Tuning and starting values 
   ###
   
   N.tune <- seq(-1*tune$N,tune$N,1)  
@@ -55,9 +66,8 @@ N.mixture.trend.MCMC <- function(Y,W,priors,tune,start,n.mcmc=1000){
   N <- start$N
   lambda <- start$lambda
   theta <- start$theta
-  p <- expit(W.mat%*%alpha)
-  
-  
+  p <- matrix(expit(W%*%alpha),T,qY,byrow=TRUE)
+
   ###
   ###  Begin MCMC loop
   ###
@@ -73,33 +83,32 @@ N.mixture.trend.MCMC <- function(Y,W,priors,tune,start,n.mcmc=1000){
     ###
     ###  Sample alpha 
     ###
-    
+  
     alpha.star <- rnorm(qW,alpha,tune$alpha*I(qW))
-    p.star <- expit(W.mat%*%alpha.star)
-    N.tmp <- c(sapply(1:T,function(x) rep(N[x],m[x])))    
-    mh.star.alpha <- sum(dbinom(c(t(Y)),N.tmp,p.star,log=TRUE))+sum(dnorm(alpha.star,0,priors$tau,log=TRUE))
-    mh.0.alpha <- sum(dbinom(c(t(Y)),N.tmp,p,log=TRUE))+sum(dnorm(alpha,0,priors$tau,log=TRUE))
+    p.star <- matrix(expit(W%*%alpha.star),T,qY,byrow=TRUE)
+    mh.star.alpha <- sum(dbinom(Y,N,p.star,log=TRUE),na.rm=TRUE)+sum(dnorm(alpha.star,0,priors$tau,log=TRUE))
+    mh.0.alpha <- sum(dbinom(Y,N,p,log=TRUE),na.rm=TRUE)+sum(dnorm(alpha,0,priors$tau,log=TRUE))
     if(exp(mh.star.alpha-mh.0.alpha)>runif(1)){
       alpha <- alpha.star
-      p <- expit(W.mat%*%alpha)
+      p <- p.star
       keep$alpha <- keep$alpha+1
     }
+
     
     ###
     ###  Sample N[1] (i.e., abundance for t=1)
     ###    
-    
+
     N.star <- N[1] + sample(N.tune,1)
     if(N.star>y.max[1]){ # Update N[1] only if N.star>y.max[1]
-      p.tmp <- p[p.idx[1,1]:p.idx[1,2]] # Detection probabilities for t=1
-      mh.star.N <- sum(dbinom(Y[1,],N.star,p.tmp,log=TRUE))+dpois(N.star,lambda,log=TRUE)
-      mh.0.N <- sum(dbinom(Y[1,],N[1],p.tmp,log=TRUE))+dpois(N[1],lambda,log=TRUE)  
+      mh.star.N <- sum(dbinom(Y[1,],N.star,p[1,],log=TRUE),na.rm=TRUE)+dpois(N.star,lambda,log=TRUE)
+      mh.0.N <- sum(dbinom(Y[1,],N[1],p[1,],log=TRUE),na.rm=TRUE)+dpois(N[1],lambda,log=TRUE)  
       if(exp(mh.star.N-mh.0.N)>runif(1)){
         N[1] <- N.star
         keep$N <- keep$N+1
       }    
     }      
-    
+
     ###
     ###  Sample N[2:(T-1)] (i.e., abundance for t=2:(T-1))
     ###   
@@ -107,18 +116,17 @@ N.mixture.trend.MCMC <- function(Y,W,priors,tune,start,n.mcmc=1000){
     for(t in 2:(T-1)){
       N.star <- N[t] + sample(N.tune,1)
       if(N.star>y.max[t]){ # Update N[t] only if N.star>y.max[t]
-        p.tmp <- p[p.idx[t,1]:p.idx[t,2]] # Detection probabilities for t=t
-        mh.star.N <- sum(dbinom(Y[t,],N.star,p.tmp,log=TRUE))+
+        mh.star.N <- sum(dbinom(Y[t,],N.star,p[t,],log=TRUE),na.rm=TRUE)+
           dpois(N.star,exp(log(theta)+log(N[t-1])),log=TRUE)+dpois(N[t+1],exp(log(theta)+log(N.star)),log=TRUE)
-        # dpois(N.star,theta*N[t-1],log=TRUE)+dpois(N[t+1],theta*N.star,log=TRUE)
-        mh.0.N <- sum(dbinom(Y[t,],N[t],p.tmp,log=TRUE))+
+          # dpois(N.star,theta*N[t-1],log=TRUE)+dpois(N[t+1],theta*N.star,log=TRUE)
+        mh.0.N <- sum(dbinom(Y[t,],N[t],p[t,],log=TRUE),na.rm=TRUE)+
           dpois(N[t],exp(log(theta)+log(N[t-1])),log=TRUE)+dpois(N[t+1],exp(log(theta)+log(N[t])),log=TRUE)
-        # dpois(N[t],theta*N[t-1],log=TRUE)+dpois(N[t+1],theta*N[t],log=TRUE)
+          # dpois(N[t],theta*N[t-1],log=TRUE)+dpois(N[t+1],theta*N[t],log=TRUE)
         if(exp(mh.star.N-mh.0.N)>runif(1)){
           N[t] <- N.star
           keep$N <- keep$N+1
         }    
-      }      
+      }
     }
     
     
@@ -128,9 +136,10 @@ N.mixture.trend.MCMC <- function(Y,W,priors,tune,start,n.mcmc=1000){
     
     N.star <- N[T] + sample(N.tune,1)
     if(N.star>y.max[T]){ # Update N[T] only if N.star>y.max[T]
-      p.tmp <- p[p.idx[T,1]:p.idx[T,2]] # Detection probabilities for t=T
-      mh.star.N <- sum(dbinom(Y[T,],N.star,p.tmp,log=TRUE))+dpois(N.star,exp(log(theta)+log(N[T-1])),log=TRUE)
-      mh.0.N <- sum(dbinom(Y[T,],N[T],p.tmp,log=TRUE))+dpois(N[T],exp(log(theta)+log(N[T-1])),log=TRUE)  
+      mh.star.N <- sum(dbinom(Y[T,],N.star,p[T,],log=TRUE),na.rm=TRUE)+
+        dpois(N.star,exp(log(theta)+log(N[T-1])),log=TRUE)
+      mh.0.N <- sum(dbinom(Y[T,],N[T],p[T,],log=TRUE),na.rm=TRUE)+
+        dpois(N[T],exp(log(theta)+log(N[T-1])),log=TRUE)  
       # mh.star.N <- sum(dbinom(Y[T,],N.star,p.tmp,log=TRUE))+dpois(N.star,theta*N[T-1],log=TRUE)
       # mh.0.N <- sum(dbinom(Y[T,],N[T],p.tmp,log=TRUE))+dpois(N[T],theta*N[T-1],log=TRUE)  
       if(exp(mh.star.N-mh.0.N)>runif(1)){
@@ -150,18 +159,20 @@ N.mixture.trend.MCMC <- function(Y,W,priors,tune,start,n.mcmc=1000){
     ###
     ###  Sample theta
     ###
-    
+
     theta.star <- rnorm(1,theta,tune$theta)
-    mh.star.theta <- sum(dpois(N[-1],exp(log(theta.star)+log(N[-T])),log=TRUE))+dnorm(theta.star,1,priors$sigma,log=TRUE)
-    mh.0.theta <- sum(dpois(N[-1],exp(log(theta)+log(N[-T])),log=TRUE))+dnorm(theta,1,priors$sigma,log=TRUE)
+    mh.star.theta <- sum(dpois(N[-1],exp(log(theta.star)+log(N[-T])),log=TRUE))+
+      dnorm(theta.star,1,priors$sigma,log=TRUE)
+    mh.0.theta <- sum(dpois(N[-1],exp(log(theta)+log(N[-T])),log=TRUE))+
+      dnorm(theta,1,priors$sigma,log=TRUE)
     # mh.star.theta <- sum(dpois(N[-1],theta.star*N[-T],log=TRUE))+dnorm(theta.star,1,priors$sigma,log=TRUE)
     # mh.0.theta <- sum(dpois(N[-1],theta*N[-T],log=TRUE))+dnorm(theta,1,priors$sigma,log=TRUE)
     if(exp(mh.star.theta-mh.0.theta)>runif(1)){
       theta <- theta.star
       keep$theta <- keep$theta+1
     }
-    
-    
+
+
     ###
     ###  Save Samples 
     ###

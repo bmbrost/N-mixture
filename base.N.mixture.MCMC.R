@@ -52,7 +52,7 @@ base.N.mixture.MCMC <- function(Y,priors,tune,start,n.mcmc=1000){
     ###
     ###  Sample p 
     ###
-  
+    
     p <- rbeta(m,y+priors$a,sapply(1:m,function(x) sum(N[x]-Y[x,],na.rm=TRUE))+priors$b)
     
 
@@ -67,18 +67,6 @@ base.N.mixture.MCMC <- function(Y,priors,tune,start,n.mcmc=1000){
     ###  Sample N 
     ###
     
-#     N.star <- N + sample(N.tune,m,replace=TRUE)    
-#     idx <- which(N.star>y.max)
-#     for(i in idx){
-#       p.tmp <- p[p.idx[i,1]:p.idx[i,2]] # Detection probabilities for t=i
-#       mh.star.N <- sum(dbinom(Y[i,],N.star[i],p.tmp,log=TRUE))+dpois(N.star[i],lambda[i],log=TRUE)
-#       mh.0.N <- sum(dbinom(Y[i,],N[i],p.tmp,log=TRUE))+dpois(N[i],lambda[i],log=TRUE)  
-#       if(exp(mh.star.N-mh.0.N)>runif(1)){
-#         N[i] <- N.star[i]
-#         keep$N <- keep$N+1
-#       }
-#     }  
-
     N.star <- N + sample(N.tune,m,replace=TRUE)
     idx <- which(N.star>y.max)
     for(i in idx){
@@ -90,14 +78,6 @@ base.N.mixture.MCMC <- function(Y,priors,tune,start,n.mcmc=1000){
       }
     }  
     
-#     if(length(idx)>0){
-#       mh.star.N <- rowSums(matrix(dbinom(Y[idx,],N.star[idx],p[idx],log=TRUE),n.tmp,J))+dpois(N.star[idx],lambda[idx],log=TRUE)
-#       mh.0.N <- rowSums(matrix(dbinom(Y[idx,],N[idx],p[idx],log=TRUE),n.tmp,J))+dpois(N[idx],lambda[idx],log=TRUE)  
-#       idx <- idx[exp(mh.star.N-mh.0.N)>runif(n.tmp)]
-#       N[idx] <- N.star[idx]
-#       keep <- keep+length(idx)
-#     }
-
     
     ###
     ###  Save Samples 
