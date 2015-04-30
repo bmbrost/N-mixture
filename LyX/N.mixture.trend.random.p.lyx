@@ -74,23 +74,27 @@
 \begin_body
 
 \begin_layout Standard
+\paragraph_spacing onehalf
 \noindent
 \align center
 
 \shape smallcaps
 \size larger
-N-mixture Model with Temporal Trend
+N-mixture Model with Temporal Trend and Random Effect on Detection Probability
 \end_layout
 
 \begin_layout Standard
 \align center
+\begin_inset VSpace -0.25in
+\end_inset
+
 Brian M.
  Brost
 \end_layout
 
 \begin_layout Standard
 \align center
-25 APR 2015
+30 APR 2015
 \end_layout
 
 \begin_layout Standard
@@ -111,12 +115,12 @@ Model implementation
 \end_layout
 
 \begin_layout Standard
-The file N.mixture.trend.sim.R simulates data according to the model statement
- presented below, and
+The file N.mixture.trend.random.p.sim.R simulates data according to the model
+ statement presented below,
 \begin_inset Newline newline
 \end_inset
 
-N.mixture.trend.mcmc.R contains the MCMC algorithm for model fitting.
+ and N.mixture.trend.random.p.mcmc.R contains the MCMC algorithm for model fitting.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -165,10 +169,12 @@ y_{it} & \sim & \text{Binom}(N_{t},p_{it})\\
 N_{1} & \sim & \text{Pois}(\lambda_{1})\\
 N_{t} & \sim & \text{Pois\left(\lambda_{t}\right)},\, t=2,\ldots,T\\
 \log\left(\lambda_{t}\right) & = & \theta N_{t-1}\\
-\theta & \sim & \text{N}(\boldsymbol{\mu}_{\theta},\sigma^{2})\\
+\text{logit}(p_{it}) & \sim & \mathbf{W}_{it}\boldsymbol{\alpha}+\epsilon_{it}\\
+\epsilon_{it} & \sim & \text{N}(0,\zeta^{2})\\
 \lambda_{1} & \sim & \text{Gamma}(r,q)\\
-\text{logit}(p_{it}) & \sim & \mathbf{W}_{it}\boldsymbol{\alpha}\\
-\boldsymbol{\alpha} & \sim & \text{N}(\boldsymbol{\mu}_{\alpha},\tau^{2}\mathbf{I}).
+\theta & \sim & \text{N}(\boldsymbol{\mu}_{\theta},\sigma^{2})\\
+\boldsymbol{\alpha} & \sim & \text{N}(\boldsymbol{\mu}_{\alpha},\tau^{2}\mathbf{I})\\
+\zeta & \sim & \text{Unif}(a,b).
 \end{eqnarray*}
 
 \end_inset
@@ -182,9 +188,9 @@ Note that an identity link for the model on
 \end_inset
 
 .
- The algorithm in N.mixture.trend.mcmc.R will also estimate the posterior predictive
- distribution for time periods in which no observations are available, i.e.,
- 
+ The algorithm in N.mixture.trend.random.p.mcmc.R will also estimate the posterior
+ predictive distribution for time periods in which no observations are available
+, i.e., 
 \begin_inset Formula $N_{\tilde{t}}$
 \end_inset
 
@@ -203,7 +209,7 @@ Posterior distribution
 \begin_layout Standard
 \begin_inset Formula 
 \[
-[N_{1},N_{\{t>2\}},\boldsymbol{\alpha},\lambda_{1},\theta|\mathbf{Y},\mathbf{W}]\propto\prod_{t=1}^{T}\prod_{i=1}^{m}[y_{it}|N_{t},p_{it}][N_{1}|\lambda_{1}][N_{\{t>2\}}|\theta][\theta][\lambda_{1}][\boldsymbol{\alpha}]
+[N_{1},N_{\{t>2\}},\boldsymbol{\alpha},\lambda_{1},\boldsymbol{\lambda},\boldsymbol{\epsilon},\zeta,\theta|\mathbf{Y},\mathbf{W}]\propto\prod_{t=1}^{T}\prod_{i=1}^{m}[y_{it}|N_{t},p_{it}][N_{1}|\lambda_{1}][N_{\{t>2\}}|\theta][\epsilon_{it}][\theta][\lambda_{1}][\boldsymbol{\alpha}][\zeta]
 \]
 
 \end_inset
@@ -463,6 +469,74 @@ Population growth rate (
 
 This full-conditional lacks an analytical solution; therefore, sample 
 \begin_inset Formula $\theta$
+\end_inset
+
+ using Metropolis-Hastings.
+\emph on
+
+\begin_inset VSpace bigskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+Random effect on detection probability (
+\begin_inset Formula $\epsilon_{it}$
+\end_inset
+
+):
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+[\epsilon_{it}|\cdot] & \propto & [y_{it}|N_{t},p_{it}][\epsilon_{it}]
+\end{eqnarray*}
+
+\end_inset
+
+This full-conditional lacks an analytical solution; therefore, sample 
+\begin_inset Formula $\epsilon_{it}$
+\end_inset
+
+ using Metropolis-Hastings.
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+\begin_inset VSpace bigskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+Standard deviation of random effect (
+\begin_inset Formula $\zeta$
+\end_inset
+
+):
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+[\zeta|\cdot] & \propto & \prod_{t=1}^{T}\prod_{i=1}^{m}[\epsilon_{it}|\zeta][\zeta].
+\end{eqnarray*}
+
+\end_inset
+
+This full-conditional lacks an analytical solution; therefore, sample 
+\begin_inset Formula $\zeta$
 \end_inset
 
  using Metropolis-Hastings.

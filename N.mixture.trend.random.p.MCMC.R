@@ -132,7 +132,6 @@ N.mixture.trend.random.p.MCMC <- function(Y,W,priors,tune,start,n.mcmc=1000){
         keep$zeta <- keep$zeta+1
       } 
     }
-    #     zeta <- start$zeta
     
     
     ###

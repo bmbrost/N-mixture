@@ -1,0 +1,546 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 1in
+\topmargin 1in
+\rightmargin 1in
+\bottommargin 1in
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+\paragraph_spacing onehalf
+\noindent
+\align center
+
+\shape smallcaps
+\size larger
+N-mixture Model with Temporal Trend and Random Effect on Detection Probability
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset VSpace -0.25in
+\end_inset
+
+Brian M.
+ Brost
+\end_layout
+
+\begin_layout Standard
+\align center
+30 APR 2015
+\end_layout
+
+\begin_layout Standard
+\noindent
+\align center
+\begin_inset CommandInset line
+LatexCommand rule
+width "75col%"
+height "0.5pt"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Model implementation
+\end_layout
+
+\begin_layout Standard
+The file N.mixture.trend.random.p.sim.R simulates data according to the model
+ statement presented below, and
+\begin_inset Newline newline
+\end_inset
+
+N.mixture.trend.random.p.mcmc.R contains the MCMC algorithm for model fitting.
+\end_layout
+
+\begin_layout Subsubsection*
+Model statement
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $y_{it}$
+\end_inset
+
+ be the 
+\begin_inset Formula $i^{th}$
+\end_inset
+
+ count of individuals during time period 
+\begin_inset Formula $t$
+\end_inset
+
+, for 
+\begin_inset Formula $i=1,\ldots,m$
+\end_inset
+
+ and 
+\begin_inset Formula $t=1,\ldots,T$
+\end_inset
+
+, and 
+\begin_inset Formula $N_{t}$
+\end_inset
+
+ be the true number of individuals at time 
+\begin_inset Formula $t$
+\end_inset
+
+.
+ Assuming the population is closed to mortality, recruitment, immigration,
+ and emigration over the course of the 
+\begin_inset Formula $m$
+\end_inset
+
+ surveys conducted during any given time period, 
+\begin_inset Formula 
+\begin{eqnarray*}
+y_{it} & \sim & \text{Binom}(N_{t},p_{it})\\
+N_{1} & \sim & \text{Pois}(\lambda_{1})\\
+N_{t} & \sim & \text{Pois\left(\lambda_{t}\right)},\, t=2,\ldots,T\\
+\log\left(\lambda_{t}\right) & = & \theta N_{t-1}\\
+\text{logit}(p_{it}) & \sim & \mathbf{W}_{it}\boldsymbol{\alpha}+\epsilon_{it}\\
+\epsilon_{it} & \sim & \text{N}(0,\zeta^{2})\\
+\lambda_{1} & \sim & \text{Gamma}(r,q)\\
+\theta & \sim & \text{N}(\boldsymbol{\mu}_{\theta},\sigma^{2})\\
+\boldsymbol{\alpha} & \sim & \text{N}(\boldsymbol{\mu}_{\alpha},\tau^{2}\mathbf{I})\\
+\zeta & \sim & \text{Unif}(a,b).
+\end{eqnarray*}
+
+\end_inset
+
+Note that an identity link for the model on 
+\begin_inset Formula $N_{t}$
+\end_inset
+
+ could also be used, i.e., 
+\begin_inset Formula $N_{t}\sim\text{Pois}(\theta N_{t-1})$
+\end_inset
+
+.
+ The algorithm in N.mixture.trend.random.p.mcmc.R will also estimate the posterior
+ predictive distribution for time periods in which no observations are available
+, i.e., 
+\begin_inset Formula $N_{\tilde{t}}$
+\end_inset
+
+, 
+\begin_inset Formula $\tilde{t}=2,\ldots,T-1$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Subsubsection*
+Posterior distribution
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+[N_{1},N_{\{t>2\}},\boldsymbol{\alpha},\lambda_{1},\boldsymbol{\lambda},\boldsymbol{\epsilon},\zeta,\theta|\mathbf{Y},\mathbf{W}]\propto\prod_{t=1}^{T}\prod_{i=1}^{m}[y_{it}|N_{t},p_{it}][N_{1}|\lambda_{1}][N_{\{t>2\}}|\theta][\epsilon_{it}][\theta][\lambda_{1}][\boldsymbol{\alpha}][\zeta]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Full conditional distributions
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+Coefficients describing the effect of covariates on detection probability
+ (
+\begin_inset Formula $\boldsymbol{\alpha}$
+\end_inset
+
+):
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+[\boldsymbol{\alpha}|\cdot] & \propto & \prod_{t=1}^{T}\prod_{i=1}^{m}[y_{it}|N_{t},p_{it}][\boldsymbol{\alpha}].
+\end{eqnarray*}
+
+\end_inset
+
+This full-conditional distribution does not have a known analytical form;
+ therefore, sample 
+\begin_inset Formula $\mathbf{p}$
+\end_inset
+
+ using Metropolis-Hastings.
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+\begin_inset VSpace bigskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+The true number of individuals during 
+\begin_inset Formula $t=1$
+\end_inset
+
+ (
+\begin_inset Formula $N_{1}$
+\end_inset
+
+):
+\emph default
+
+\begin_inset Formula 
+\begin{eqnarray*}
+[N_{1}|\cdot] & \propto & \prod_{i=1}^{m}[y_{i1}|N_{1},p_{i1}][N_{1}|\lambda_{1}]\\
+ & \propto & \prod_{i=1}^{m}\frac{\left(\lambda_{1}(1-p_{i1})\right){}^{N_{1}-y_{i1}}}{(N_{1}-y_{i1})!}e^{-\lambda_{1}(1-p_{i1})}.
+\end{eqnarray*}
+
+\end_inset
+
+This full-conditional is a little strange because 
+\begin_inset Formula $[N_{1}-y_{i1}|\cdot]\propto\text{Pois}(\lambda_{1}(1-p_{i1}))$
+\end_inset
+
+, which suggests there is one true abundance per replicate count during
+ 
+\begin_inset Formula $t=1$
+\end_inset
+
+.
+ This is in contrast to the case in which only one observation exists per
+ site, i.e., 
+\begin_inset Formula $[N_{i}-y_{i}|\cdot]\propto\text{Pois}(\lambda_{i}(1-p_{i}))$
+\end_inset
+
+.
+ Given that 
+\begin_inset Formula $[N_{1}|\cdot]$
+\end_inset
+
+ lacks a clear analytical solution, sample 
+\begin_inset Formula $N_{1}$
+\end_inset
+
+ using Metropolis-Hastings.
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+\begin_inset VSpace bigskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+The true number of individuals during 
+\begin_inset Formula $t=2,\ldots,T-1$
+\end_inset
+
+ (
+\begin_inset Formula $N_{t}$
+\end_inset
+
+):
+\emph default
+
+\begin_inset Formula 
+\begin{eqnarray*}
+[N_{t}|\cdot] & \propto & \prod_{i=1}^{m}[y_{it}|N_{t},p_{it}][N_{t}|\theta,N_{t-1}][N_{t+1}|\theta,N_{t}]
+\end{eqnarray*}
+
+\end_inset
+
+This full-conditional lacks an analytical solution; therefore, sample 
+\begin_inset Formula $N_{t}$
+\end_inset
+
+ using Metropolis-Hastings.
+ Note, for time periods 
+\begin_inset Formula $\tilde{t}$
+\end_inset
+
+ in which observations are missing, the posterior predictive distribution
+ for true abundance is:
+\begin_inset Formula 
+\begin{eqnarray*}
+[N_{\tilde{t}}|\cdot] & \propto & \prod_{i=1}^{m}[N_{\tilde{t}}|\theta,N_{\tilde{t}-1}][N_{\tilde{t}+1}|\theta,N_{\tilde{t}}].
+\end{eqnarray*}
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+\begin_inset VSpace bigskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+The true number of individuals during 
+\begin_inset Formula $t=T$
+\end_inset
+
+ (
+\begin_inset Formula $N_{T}$
+\end_inset
+
+):
+\emph default
+
+\begin_inset Formula 
+\begin{eqnarray*}
+[N_{T}|\cdot] & \propto & \prod_{i=1}^{m}[y_{iT}|N_{T},p_{iT}][N_{T}|\theta,N_{T-1}]
+\end{eqnarray*}
+
+\end_inset
+
+This full-conditional lacks an analytical solution; therefore, sample 
+\begin_inset Formula $N_{T}$
+\end_inset
+
+ using Metropolis-Hastings.
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+\begin_inset VSpace bigskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+Rate of the process model for 
+\begin_inset Formula $N_{1}$
+\end_inset
+
+ (
+\begin_inset Formula $\lambda_{1}$
+\end_inset
+
+):
+\emph default
+
+\begin_inset Formula 
+\begin{eqnarray*}
+[\lambda_{1}|\cdot] & \propto & [N_{1}|\lambda_{1}][\lambda_{1}]\\
+ & \propto & \frac{\lambda_{1}^{N_{1}}e^{-\lambda_{1}}}{N_{1}!}\lambda_{1}^{r-1}e^{-\lambda_{1}q}\\
+ & \propto & \lambda_{1}^{N_{1}}e^{-\lambda_{1}}\lambda_{1}^{r-1}e^{-\lambda_{1}q}\\
+ & \propto & \lambda_{1}^{N_{1}+r-1}e^{-\lambda_{1}(1+q)}\\
+ & = & \text{Gamma}\left(N_{1}+r,1+q\right).
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+\begin_inset VSpace bigskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+Population growth rate (
+\begin_inset Formula $\theta$
+\end_inset
+
+):
+\emph default
+
+\begin_inset Formula 
+\begin{eqnarray*}
+[\theta|\cdot] & \propto & [N_{t}|\theta,N_{t-1}][\theta]
+\end{eqnarray*}
+
+\end_inset
+
+This full-conditional lacks an analytical solution; therefore, sample 
+\begin_inset Formula $\theta$
+\end_inset
+
+ using Metropolis-Hastings.
+\emph on
+
+\begin_inset VSpace bigskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+Random effect on detection probability (
+\begin_inset Formula $\epsilon_{it}$
+\end_inset
+
+):
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+[\epsilon_{it}|\cdot] & \propto & [y_{it}|N_{t},p_{it}][\epsilon_{it}]
+\end{eqnarray*}
+
+\end_inset
+
+This full-conditional lacks an analytical solution; therefore, sample 
+\begin_inset Formula $\epsilon_{it}$
+\end_inset
+
+ using Metropolis-Hastings.
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+\begin_inset VSpace bigskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+Standard deviation of random effect (
+\begin_inset Formula $\zeta$
+\end_inset
+
+):
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+[\zeta|\cdot] & \propto & \prod_{t=1}^{T}\prod_{i=1}^{m}[\epsilon_{it}|\zeta][\zeta].
+\end{eqnarray*}
+
+\end_inset
+
+This full-conditional lacks an analytical solution; therefore, sample 
+\begin_inset Formula $\zeta$
+\end_inset
+
+ using Metropolis-Hastings.
+\end_layout
+
+\end_body
+\end_document
