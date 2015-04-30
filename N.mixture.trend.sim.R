@@ -83,3 +83,28 @@ idx <- 5
 hist(out1$N[-(1:1000),idx],col="gray",breaks=100)
 abline(v=N[idx],lty=2,col=2)
 
+
+source("/Users/brost/Documents/git/Nmixture/N.mixture.trend.MCMC.R")
+# hist(rgamma(1000,9,0.025),breaks=100)
+priors <- list(r=9,q=0.025,tau=5,sigma=0.1)
+tune <- list(N=40,alpha=0.003,theta=0.05)
+N.start <- round(sapply(1:T,function(x) # Moving average for missing time periods
+  ifelse(sum(Y[x,],na.rm=TRUE)>0,max(Y[x,],na.rm=TRUE), mean(c(Y[x-1,],Y[x+1,]),na.rm=TRUE)))*1.1)
+# start <- list(N=N.start,alpha=c(-0.5),lambda=350,theta=1) # Intercept only
+start <- list(N=N.start,alpha=c(-1,0.25),lambda=350,theta=1) # Effort
+# start <- list(N=N.start,alpha=c(-1,0.2,0),lambda=350,theta=1) # Effort and year
+out3 <- N.mixture.trend.MCMC(Y,W,priors,tune,start,n.mcmc=50000)
+
+idx <- 40000:50000
+matplot(out3$alpha[idx,],type="l")
+apply(out3$alpha,2,mean);apply(out3$alpha,2,quantile,c(0.025,0.975))
+matplot(out3$N[idx,],type="l",col=1:ncol(out3$N),lty=1)
+apply(out3$N[idx,],2,mean);apply(out3$N[idx,],2,quantile,c(0.025,0.975))
+matplot(out3$lambda[idx],type="l")
+mean(out3$lambda[idx]);quantile(out3$lambda[idx],c(0.025,0.975))
+plot(out3$theta[idx],type="l");quantile(out3$theta[idx],c(0.025,0.975))
+
+beanplot(c(out3$N[idx,])~rep(as.numeric(unique(times)),each=length(idx)),ll=0,beanlinewd=0,bw=10,log="",
+         col=rgb(0,0,0,0.25),las=1,add=FALSE,ylim=c(0,1500))
+
+

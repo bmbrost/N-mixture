@@ -1,4 +1,13 @@
-N.mixture.re.MCMC <- function(Y,W,priors,tune,start,n.mcmc=1000){
+### Note that this model, with alpha (i.e., coefficients that quantify the affect of covariates on
+### detection variable, alpha[i]~N(mu.alpha,tau^2*I)) that varies by sites, is a work progress. 
+### It currently does not estimate mu.alpha properly.
+
+
+
+
+
+
+N.mixture.random.alpha.MCMC <- function(Y,W,priors,tune,start,n.mcmc=1000){
 
   ###
   ### Brian M. Brost (25APR2015)

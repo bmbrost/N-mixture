@@ -1,3 +1,9 @@
+### Note that the corresponding model, with alpha (i.e., coefficients that quantify the affect of covariates on
+### detection variable, alpha[i]~N(mu.alpha,tau^2*I)) that varies by sites, is a work progress. 
+### It currently does not estimate mu.alpha properly.
+
+
+
 rm(list=ls())
 
 library(mvtnorm)
@@ -55,12 +61,12 @@ points(rep(1:m,max(J)),Y,cex=(p+1)^2,pch=19,col=rgb(1,0,0,0.25)) # Observed coun
 ### Fit model using MCMC algorithm
 ###
 
-source("/Users/bmb/Documents/git/Nmixture/N.mixture.re.MCMC.R")
+source("/Users/bmb/Documents/git/Nmixture/N.mixture.random.alpha.MCMC.R")
 # hist(rgamma(1000,5,0.01))
 priors <- list(r=5,q=0.001,zeta=2,a=0,b=5,mu.0=rep(0,2))
 tune <- list(N=15,alpha=0.01,tau=0.25)
 start <- list(N=N,alpha=alpha,lambda=lambda,mu.alpha=mu.alpha,tau=tau)
-out1 <- N.mixture.re.MCMC(Y,W,priors,tune,start,n.mcmc=10000)
+out1 <- N.mixture.random.alpha.MCMC(Y,W,priors,tune,start,n.mcmc=10000)
 
 matplot(out1$N,type="l",col=1:m,lty=1);abline(h=N,col=1:m,lty=2)
 apply(out1$N,2,quantile,c(0.025,0.975))
