@@ -166,9 +166,8 @@ Let
 \begin_inset Formula 
 \begin{eqnarray*}
 y_{it} & \sim & \text{Binom}(N_{t},p_{it})\\
-N_{1} & \sim & \text{Pois}(\lambda_{1})\\
-N_{t} & \sim & \text{Pois\left(\lambda_{t}\right)},\, t=2,\ldots,T\\
-\log\left(\lambda_{t}\right) & = & \theta N_{t-1}\\
+N_{t} & \sim & \text{Pois\left(\lambda_{t}\right)}\\
+\lambda_{t} & = & \theta N_{t-1},\, t=2,\ldots,T\\
 \text{logit}(p_{it}) & \sim & \mathbf{W}_{it}\boldsymbol{\alpha}+\epsilon_{it}\\
 \epsilon_{it} & \sim & \text{N}(0,\zeta^{2})\\
 \lambda_{1} & \sim & \text{Gamma}(r,q)\\
@@ -322,6 +321,45 @@ This full-conditional is a little strange because
 \noindent
 
 \emph on
+Rate of the process model for 
+\begin_inset Formula $N_{1}$
+\end_inset
+
+ (
+\begin_inset Formula $\lambda_{1}$
+\end_inset
+
+):
+\emph default
+
+\begin_inset Formula 
+\begin{eqnarray*}
+[\lambda_{1}|\cdot] & \propto & [N_{1}|\lambda_{1}][\lambda_{1}]\\
+ & \propto & \frac{\lambda_{1}^{N_{1}}e^{-\lambda_{1}}}{N_{1}!}\lambda_{1}^{r-1}e^{-\lambda_{1}q}\\
+ & \propto & \lambda_{1}^{N_{1}}e^{-\lambda_{1}}\lambda_{1}^{r-1}e^{-\lambda_{1}q}\\
+ & \propto & \lambda_{1}^{N_{1}+r-1}e^{-\lambda_{1}(1+q)}\\
+ & = & \text{Gamma}\left(N_{1}+r,1+q\right).
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
+\begin_inset VSpace bigskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\emph on
 The true number of individuals during 
 \begin_inset Formula $t=2,\ldots,T-1$
 \end_inset
@@ -398,45 +436,6 @@ This full-conditional lacks an analytical solution; therefore, sample
 \end_inset
 
  using Metropolis-Hastings.
-\end_layout
-
-\begin_layout Standard
-\noindent
-
-\emph on
-\begin_inset VSpace bigskip
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\noindent
-
-\emph on
-Rate of the process model for 
-\begin_inset Formula $N_{1}$
-\end_inset
-
- (
-\begin_inset Formula $\lambda_{1}$
-\end_inset
-
-):
-\emph default
-
-\begin_inset Formula 
-\begin{eqnarray*}
-[\lambda_{1}|\cdot] & \propto & [N_{1}|\lambda_{1}][\lambda_{1}]\\
- & \propto & \frac{\lambda_{1}^{N_{1}}e^{-\lambda_{1}}}{N_{1}!}\lambda_{1}^{r-1}e^{-\lambda_{1}q}\\
- & \propto & \lambda_{1}^{N_{1}}e^{-\lambda_{1}}\lambda_{1}^{r-1}e^{-\lambda_{1}q}\\
- & \propto & \lambda_{1}^{N_{1}+r-1}e^{-\lambda_{1}(1+q)}\\
- & = & \text{Gamma}\left(N_{1}+r,1+q\right).
-\end{eqnarray*}
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard

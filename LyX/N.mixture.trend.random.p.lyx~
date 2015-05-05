@@ -116,11 +116,11 @@ Model implementation
 
 \begin_layout Standard
 The file N.mixture.trend.random.p.sim.R simulates data according to the model
- statement presented below, and
+ statement presented below,
 \begin_inset Newline newline
 \end_inset
 
-N.mixture.trend.random.p.mcmc.R contains the MCMC algorithm for model fitting.
+ and N.mixture.trend.random.p.mcmc.R contains the MCMC algorithm for model fitting.
 \end_layout
 
 \begin_layout Subsubsection*

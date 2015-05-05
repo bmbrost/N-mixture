@@ -347,28 +347,11 @@ This full-conditional lacks an analytical solution; therefore, sample
  for true abundance is:
 \begin_inset Formula 
 \begin{eqnarray*}
-[N_{\tilde{t}}|\cdot] & \propto & \prod_{i=1}^{m}[N_{\tilde{t}}|\theta,N_{\tilde{t}-1}][N_{\tilde{t}+1}|\theta,N_{\tilde{t}}],
+[N_{\tilde{t}}|\cdot] & \propto & \prod_{i=1}^{m}[N_{\tilde{t}}|\theta,N_{\tilde{t}-1}][N_{\tilde{t}+1}|\theta,N_{\tilde{t}}].
 \end{eqnarray*}
 
 \end_inset
 
-where observations for time periods 
-\begin_inset Formula $\tilde{t}-1$
-\end_inset
-
- and 
-\begin_inset Formula $\tilde{t}+1$
-\end_inset
-
- are available and 
-\begin_inset Formula $N_{\tilde{t}-1}$
-\end_inset
-
- and 
-\begin_inset Formula $N_{\tilde{t}+1}$
-\end_inset
-
- are estimated as above.
  
 \end_layout
 
