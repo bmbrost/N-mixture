@@ -57,7 +57,7 @@ points(rep(1:m,max(J)),Y,cex=(p+1)^2,pch=19,col=rgb(1,0,0,0.25)) # Observed coun
 ### Fit model using MCMC algorithm
 ###
 
-source("/Users/brost/Documents/git/Nmixture/N.mixture.random.p.MCMC.R")
+source("/Users/brost/Documents/git/N-mixture/N.mixture.random.p.MCMC.R")
 # hist(rgamma(1000,5,0.01))
 priors <- list(r=5,q=0.001,tau=2,a=0,b=3)
 tune <- list(N=5,alpha=0.005,eps=0.75,zeta=0.05)

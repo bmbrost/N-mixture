@@ -70,7 +70,7 @@ W[((idx-1)*max(m)+1):((idx)*max(m)),] <- NA # Remove corresponding W
 ### Fit model using MCMC algorithm
 ###
 
-source("/Users/brost/Documents/git/Nmixture/N.mixture.trend.random.p.MCMC.R")
+source("/Users/brost/Documents/git/N-mixture/N.mixture.trend.random.p.MCMC.R")
 # hist(rgamma(1000,9,0.025),breaks=100)
 priors <- list(r=9,q=0.025,tau=5,sigma=0.1,a=0,b=3)
 tune <- list(N=40,alpha=0.003,theta=0.05,zeta=0.25,eps=0.5)

@@ -16,7 +16,7 @@ Y <- t(sapply(1:m,function(x) rbinom(J[x],N[x],p[x]))) # Observed counts
 ### Fit model using MCMC algorithm
 ###
 
-source("/Users/brost/Documents/git/Nmixture/base.N.mixture.MCMC.R")
+source("/Users/brost/Documents/git/N-mixture/base.N.mixture.MCMC.R")
 # hist(rgamma(1000,2,0.01))
 priors <- list(a=1,b=1,r=2,q=0.01)
 tune <- list(N=2)
